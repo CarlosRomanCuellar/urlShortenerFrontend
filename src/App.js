@@ -1,39 +1,54 @@
 import "./App.css";
 import axios from "axios";
-import React , {useState, useEffect} from 'react'
+import { BrowserRouter as Router } from "react-router-dom";
+import { Route } from "react-router-dom";
+import React, { useState } from "react";
+
 axios.create({
-	baseURL: "http://localhost:5000/"
-})
+	baseURL: "http://localhost:5000/",
+});
 
 function App() {
-	const [ shortURL , setShortURL ] = useState("")
-	const [ hrefToShow , setHref ] = useState("/")
-	
+	const [shortURL, setShortURL] = useState("");
+	const [realURL, setRealURL] = useState("");
 	async function getShorterURL(event) {
 		event.preventDefault();
-		const input = document.getElementById("urlInput").value;
-		console.log(input)
-		try{
-			let response = await axios.get(`/check/${input}`);
-			// console.log(response)
-			setShortURL(`localhost:3000/${response.data}`)
-			setHref(response.data)
-		}
-		catch(err){
-			console.log(err)
-			console.log("algo paso")
+		let input = document.getElementById("urlInput").value;
+		input = input.trim()
+		
+		input = input.replace("http://www.",'')
+		input = input.replace("https://www.",'')
+		input = input.replace("www.","")
+		if(input[input.length-1] === "/") input = input.slice(0,-1)
+		try {
+			let response = await axios.get(`/check/${encodeURIComponent(input)}`);
+			setShortURL(`localhost:3000/${response.data}`);
+			setRealURL(input);
+		} catch (err) {
+			console.log(err);
 		}
 	}
-	return (
-		<div className="App">
+
+	const content = () => (
+		<div>
 			<form>
 				<label htmlFor="urlInput">URL to make short</label>
-				<input id="urlInput" type="url" />
+				<input id="urlInput" type="text" />
 				<button onClick={getShorterURL}>get shorter URL</button>
 			</form>
 			<p>Short URL:</p>
-			<a id="shortURL" href={hrefToShow}>{shortURL}</a>
+			<a id="shortURL" href={`https://${realURL}`} target="_blank" rel="noreferrer">
+				{shortURL}
+			</a>
 		</div>
+	);
+
+	return (
+		<Router>
+			<div className="App">
+				<Route path="/"  component={content}></Route>
+			</div>
+		</Router>
 	);
 }
 
